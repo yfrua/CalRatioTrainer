@@ -8,7 +8,8 @@ from keras.layers import BatchNormalization, Dense, Dropout, concatenate
 from keras.models import Model
 from keras.optimizers import Nadam
 from keras.regularizers import L1L2
-from keras.src.utils import np_utils
+# from keras.src.utils import np_utils
+from keras.utils import to_categorical
 
 from tensorflow import Tensor
 
@@ -259,8 +260,8 @@ def prep_input_for_keras(
     """
 
     # Convert labels to categorical (needed for multiclass training)
-    y_train = np_utils.to_categorical(y_train_df)
-    y_val = np_utils.to_categorical(y_val_df)
+    y_train = to_categorical(y_train_df)
+    y_val = to_categorical(y_val_df)
 
     # Split X into track, MSeg, and constit inputs and reshape dataframes into
     # shape expected by Keras. This is an ordered array, so each input is

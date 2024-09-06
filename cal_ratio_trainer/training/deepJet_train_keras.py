@@ -1,4 +1,5 @@
 import logging
+import gc
 from datetime import datetime
 from pathlib import Path
 from typing import Optional, Tuple
@@ -7,7 +8,8 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 from keras import metrics
-from keras.optimizers import Nadam
+from keras.optimizers import Nadam # type: ignore
+from keras import backend as K
 from sklearn.model_selection import train_test_split
 import yaml
 from cal_ratio_trainer.common.fileio import load_dataset
@@ -129,6 +131,11 @@ def train_llp(
         Z_adversary,
     ) = prepare_training_datasets(df, df_adversary)
 
+    # Save memory
+    del df
+    del df_adversary
+    gc.collect()
+
     # Split data into train/test datasets
     random_state = 1
     (
@@ -173,6 +180,16 @@ def train_llp(
         random_state=random_state,
         shuffle=False,
     )
+    # Delete variables to save memory
+    del X
+    del X_adversary
+    gc.collect()
+    del Y
+    del Y_adversary
+    gc.collect()
+    del Z
+    del Z_adversary
+    gc.collect()
 
     eval_object = evaluationObject()
     eval_object.fillObject_params(training_params)
@@ -496,7 +513,7 @@ def build_train_evaluate_model(
         dir_name / "keras" / "discriminator_model.keras"
     )  # creates a HDF5 file
     discriminator_model.save_weights(
-        dir_name / "keras" / "initial_discriminator_model_weights.keras"
+        dir_name / "keras" / "initial_discriminator_model.weights.h5"
     )
 
     (
@@ -580,11 +597,11 @@ def build_train_evaluate_model(
     # If this from a previous run, load the weights and our tracking history
     keras_dir = dir_name / "keras"
     epoch_h = HistoryTracker()
-    if (keras_dir / "final_weights_checkpoint.keras").exists():
+    if (keras_dir / "final_weights_checkpoint.weights.h5").exists():
         logging.info("Loading weights from previous run")
-        final_model.load_weights(keras_dir / "final_weights_checkpoint.keras")
-        original_model.load_weights(keras_dir / "original_model_checkpoint.keras")
-        discriminator_model.load_weights(keras_dir / "discriminator_checkpoint.keras")
+        final_model.load_weights(keras_dir / "final_weights_checkpoint.weights.h5")
+        original_model.load_weights(keras_dir / "original_model_checkpoint.weights.h5")
+        discriminator_model.load_weights(keras_dir / "discriminator_checkpoint.weights.h5")
         epoch_h.load(keras_dir / "history_checkpoint")
 
     # The number of epochs we are going to run, and how we are going to get started!
@@ -652,11 +669,19 @@ def build_train_evaluate_model(
             # TODO: this is printed out at the end - we should do an average and a
             # sigma or something
             # not just the last mini-batch.
-            last_loss = original_hist[0]
-            last_main_output_loss = original_hist[1]
-            last_adversary_loss = original_hist[2]
+
+            # original_hist output as dictionary example:
+            # 'adversary_out_binary_accuracy': array(0.5066525, dtype=float32), 
+            # 'adversary_out_loss': array(-7.136534, dtype=float32), 
+            # 'loss': array(7.7048564, dtype=float32), 
+            # 'main_output_categorical_accuracy': array(0.32676956, dtype=float32), 
+            # 'main_output_loss': array(14.841391, dtype=float32)
+
+            last_adv_bin_acc = original_hist[0]
+            last_adversary_loss = original_hist[1]
+            last_loss = original_hist[2]
             last_main_cat_acc = original_hist[3]
-            last_adv_bin_acc = original_hist[6]
+            last_main_output_loss = original_hist[4]
 
         logging.debug("  Info for last mini-batch of epoch")
         logging.debug(f"  loss: {last_loss:.4f}")
@@ -674,11 +699,11 @@ def build_train_evaluate_model(
             [y_to_validate_0[0], y_to_validate_adv_squeeze[0]],
             [weights_to_validate_0[0], weights_val_adversary_split[0]],
         )
-        val_last_loss = original_val_hist[0]
-        val_last_main_output_loss = original_val_hist[1]
-        val_last_adversary_loss = original_val_hist[2]
+        val_last_adv_bin_acc = original_val_hist[0]
+        val_last_adversary_loss = original_val_hist[1]
+        val_last_loss = original_val_hist[2]
         val_last_main_cat_acc = original_val_hist[3]
-        val_last_adv_bin_acc = original_val_hist[6]
+        val_last_main_output_loss = original_val_hist[4]
         logging.info(f"  loss on test dataset: {val_last_loss:.4f}")
         logging.info(
             f"  main_output_loss on test dataset: {val_last_main_output_loss:.4f}"
@@ -715,14 +740,17 @@ def build_train_evaluate_model(
 
         # Every epoch save weights if KS test below some threshold (0.3 seems good)
         #        if ks_bib < 0.3:
-        final_model.save_weights(keras_dir / f"final_model_weights_{i_epoch}.keras")
+        final_model.save_weights(keras_dir / f"final_model_weights_{i_epoch}.weights.h5")
 
         # Save the checkpoints. If user hits ^C just right, we could get ourselves into
         # an inconsistent state. But probably not likely enough to spend time
         # protecting.
-        final_model.save_weights(keras_dir / "final_weights_checkpoint.keras")
-        original_model.save_weights(keras_dir / "original_model_checkpoint.keras")
-        discriminator_model.save_weights(keras_dir / "discriminator_checkpoint.keras")
+        final_model.save_weights(keras_dir / "final_weights_checkpoint.weights.h5")
+        original_model.save_weights(keras_dir / "original_model_checkpoint.weights.h5")
+        discriminator_model.save_weights(keras_dir / "discriminator_checkpoint.weights.h5")
+
+        logging.info("Clear session")
+        K.clear_session()
 
         epoch_h.ks_qcd_hist.append(ks_qcd)
         epoch_h.ks_sig_hist.append(ks_sig)

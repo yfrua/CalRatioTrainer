@@ -9,7 +9,8 @@ import atlas_mpl_style as ampl
 import numpy as np
 import pandas as pd
 from keras import Model
-from keras.src.utils import np_utils
+# from keras.src.utils import np_utils
+from keras.utils import to_categorical
 from matplotlib import pyplot as plt
 from cal_ratio_trainer.common.column_names import EventType
 from cal_ratio_trainer.common.evaluation import (
@@ -1252,7 +1253,7 @@ def evaluate_model(
 
     # evaluate the model using Keras api
     # model.evaluate expects target data to be the same shape/format as model.fit
-    y_eval = np_utils.to_categorical(y_test)
+    y_eval = to_categorical(y_test)
     y_eval = [y_eval, y_eval, y_eval, y_eval, y_eval]
 
     # TODO: refactor and understand

@@ -3,6 +3,7 @@ from collections import defaultdict
 import json
 from pathlib import Path
 from typing import Dict, Generator, List, Optional, Tuple, Union
+import numpy as np
 
 
 def as_bare_type(t: type) -> Union[type, None]:
@@ -199,7 +200,15 @@ class HistoryTracker:
             filename = filename.with_suffix(".json")
 
         with filename.open("w") as f:
-            json.dump(self._cache, f)
+            d = self._cache
+            new_dict = {}
+            for key, value in d.items():
+                if isinstance(value, list):
+                    # Convert each item in the list
+                    new_dict[key] = [v.tolist() if isinstance(v, np.ndarray) else v for v in value]
+                else:
+                    new_dict[key] = value.tolist() if isinstance(value, np.ndarray) else value            
+            json.dump(new_dict, f)
 
     def load(self, filename: Path):
         "Load history from a file"
