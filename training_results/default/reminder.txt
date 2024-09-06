@@ -1,0 +1,2 @@
+5: memory leak, killed and use 'cr_trainer train --continue' many times. 
+10: latest deepJet_train_keras.py version, still have memory issue, crashing the server.
