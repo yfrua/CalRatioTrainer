@@ -25,6 +25,7 @@ include_high_mass: True
 # Default main file to the small test file so we get *something*
 # Any fsspec filesystem can be used. The file will be cached locally first time it is
 # accessed.
-main_training_file: "https://cernbox.cern.ch/remote.php/dav/public-files/32dqr9gSbmQdj3W/processed_output_Lxy1500_Lz3000_3_slim05.pkl"
+# main_training_file: "https://cernbox.cern.ch/remote.php/dav/public-files/32dqr9gSbmQdj3W/processed_output_Lxy1500_Lz3000_3_slim05.pkl"
+main_training_file: "https://cernbox.cern.ch/remote.php/dav/public-files/aj4aMFaytLJNaVl/processed_output_Lxy1500_Lz3000_4_slim50.pkl"
 # The control region training file for use by the adversary
 cr_training_file: https://cernbox.cern.ch/remote.php/dav/public-files/r0GQeSVMuu0mDKX/processed_output_controlRegion_corrected.pkl

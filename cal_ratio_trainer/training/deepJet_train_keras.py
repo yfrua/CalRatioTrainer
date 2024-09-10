@@ -70,7 +70,7 @@ def train_llp(
     if gpus:
         try:
             for gpu in gpus:
-                tf.config.experimental.set_memory_growth(gpu, True)
+                tf.config.experimental.set_memory_growth(gpu, False)
 
         except RuntimeError as e:
             logging.debug(e)
@@ -670,13 +670,12 @@ def build_train_evaluate_model(
             # sigma or something
             # not just the last mini-batch.
 
-            # original_hist output as dictionary example:
+            # dictionary 'original_hist' example:
             # 'adversary_out_binary_accuracy': array(0.5066525, dtype=float32), 
             # 'adversary_out_loss': array(-7.136534, dtype=float32), 
             # 'loss': array(7.7048564, dtype=float32), 
             # 'main_output_categorical_accuracy': array(0.32676956, dtype=float32), 
             # 'main_output_loss': array(14.841391, dtype=float32)
-
             last_adv_bin_acc = original_hist[0]
             last_adversary_loss = original_hist[1]
             last_loss = original_hist[2]
@@ -705,16 +704,10 @@ def build_train_evaluate_model(
         val_last_main_cat_acc = original_val_hist[3]
         val_last_main_output_loss = original_val_hist[4]
         logging.info(f"  loss on test dataset: {val_last_loss:.4f}")
-        logging.info(
-            f"  main_output_loss on test dataset: {val_last_main_output_loss:.4f}"
-        )
+        logging.info(f"  main_output_loss on test dataset: {val_last_main_output_loss:.4f}")
         logging.info(f"  adversary_loss on test dataset: {val_last_adversary_loss:.4f}")
-        logging.info(
-            f"  Main categorical accuracy on test dataset: {val_last_main_cat_acc}"
-        )
-        logging.info(
-            f"  Adversary binary accuracy on test dataset: {val_last_adv_bin_acc}"
-        )
+        logging.info(f"  Main categorical accuracy on test dataset: {val_last_main_cat_acc}")
+        logging.info(f"  Adversary binary accuracy on test dataset: {val_last_adv_bin_acc}")
 
         adversary_val_hist = discriminator_model.test_on_batch(
             small_x_val_adversary,

@@ -58,7 +58,7 @@ def load_trained_model_from_training(run_dir: Path, epoch: int) -> TrainedModel:
                 loaded model.
     """
     # Make sure the epoch is there.
-    epoch_path = run_dir / "keras" / f"final_model_weights_{epoch}.keras"
+    epoch_path = run_dir / "keras" / f"final_model_weights_{epoch}.weights.h5"
     assert epoch_path.exists(), f"Trained Model Keras file Not Found: {epoch_path}"
 
     # Load the model that was written out
