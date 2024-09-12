@@ -18,7 +18,7 @@ def training_runner_util(
     """Run the training for the LLP neural network."""
 
     # initialize the model
-    logging.info("Initalizing the model")
+    logging.info("Initializing the model")
     (
         MSeg_input,
         MSeg_input_adversary,

@@ -34,6 +34,7 @@ from cal_ratio_trainer.training.utils import (
     create_directories,
     low_or_high_pt_selection_train,
     match_adversary_weights,
+    check_memory,
 )
 from cal_ratio_trainer.utils import HistoryTracker
 
@@ -70,7 +71,7 @@ def train_llp(
     if gpus:
         try:
             for gpu in gpus:
-                tf.config.experimental.set_memory_growth(gpu, False)
+                tf.config.experimental.set_memory_growth(gpu, True)
 
         except RuntimeError as e:
             logging.debug(e)
@@ -483,9 +484,8 @@ def build_train_evaluate_model(
     ]
     logging.debug(f"Writing out test data to {dir_name.parent/'x_to_test.npz'}")
     np.savez_compressed(dir_name.parent / "x_to_test.npz", *x_to_test)
-    np.savez_compressed(
-        dir_name.parent / "weights_to_test.npz", *weights_to_test  # type: ignore
-    )
+    np.savez_compressed(dir_name.parent / "weights_to_test.npz", *weights_to_test)
+    check_memory()
 
     # Now to setup ML architecture
     logging.debug("Setting up model architecture...")
@@ -505,16 +505,13 @@ def build_train_evaluate_model(
         X_train_jet,
         training_params,
     )
+    check_memory()
 
     # Save model architecture
     original_model.save(dir_name / "keras" / "model.keras")
-    final_model.save(dir_name / "keras" / "final_model.keras")  # creates a HDF5 file
-    discriminator_model.save(
-        dir_name / "keras" / "discriminator_model.keras"
-    )  # creates a HDF5 file
-    discriminator_model.save_weights(
-        dir_name / "keras" / "initial_discriminator_model.weights.h5"
-    )
+    final_model.save(dir_name / "keras" / "final_model.keras") 
+    discriminator_model.save(dir_name / "keras" / "discriminator_model.keras") 
+    discriminator_model.save_weights(dir_name / "keras" / "initial_discriminator_model.weights.h5")
 
     (
         num_splits,
@@ -563,6 +560,7 @@ def build_train_evaluate_model(
     discriminator_model.summary(print_fn=logging.debug)
 
     # Create the optimizers for the main training and the adversary training.
+    logging.debug("Creating the optimizers for the main training and the adversary training.")
     assert training_params.lr_values is not None
     optimizer = Nadam(
         learning_rate=training_params.lr_values,
@@ -576,8 +574,10 @@ def build_train_evaluate_model(
         beta_2=0.999,
         epsilon=1e-07,
     )
+    check_memory()
 
     # Compile the models
+    logging.debug("Compiling the models.")
     _enable_layers(discriminator_model, "adversary", True)
     discriminator_model.compile(
         optimizer=optimizer_adv,
@@ -593,6 +593,7 @@ def build_train_evaluate_model(
         metrics=[metrics.categorical_accuracy, metrics.binary_accuracy],
         loss_weights=[1, -training_params.adversary_weight],
     )
+    check_memory()
 
     # If this from a previous run, load the weights and our tracking history
     keras_dir = dir_name / "keras"
@@ -610,7 +611,7 @@ def build_train_evaluate_model(
     last_epoch = first_epoch + training_params.epochs
 
     # Train each epoch
-    logging.info("Starting training")
+    logging.debug("Starting training")
     for i_epoch in range(first_epoch, last_epoch):
         logging.info(f"Training Epoch {i_epoch+1} of {last_epoch}")
 
@@ -644,6 +645,7 @@ def build_train_evaluate_model(
                     small_y_to_train_adversary_0[i_batch],
                     sample_weight=small_weights_train_adversary[i_batch],
                 )
+                check_memory()
 
                 last_disc_loss = adversary_hist[0]
                 last_disc_bin_acc = adversary_hist[1]
@@ -665,22 +667,16 @@ def build_train_evaluate_model(
             original_hist = original_model.train_on_batch(
                 train_inputs, train_outputs, train_weights
             )
+            check_memory()
 
             # TODO: this is printed out at the end - we should do an average and a
             # sigma or something
             # not just the last mini-batch.
-
-            # dictionary 'original_hist' example:
-            # 'adversary_out_binary_accuracy': array(0.5066525, dtype=float32), 
-            # 'adversary_out_loss': array(-7.136534, dtype=float32), 
-            # 'loss': array(7.7048564, dtype=float32), 
-            # 'main_output_categorical_accuracy': array(0.32676956, dtype=float32), 
-            # 'main_output_loss': array(14.841391, dtype=float32)
-            last_adv_bin_acc = original_hist[0]
-            last_adversary_loss = original_hist[1]
-            last_loss = original_hist[2]
-            last_main_cat_acc = original_hist[3]
-            last_main_output_loss = original_hist[4]
+            last_loss = original_hist[0]
+            last_main_output_loss = original_hist[1]
+            last_adversary_loss = original_hist[2]
+            last_adv_bin_acc = original_hist[3]
+            last_main_cat_acc = original_hist[4]
 
         logging.debug("  Info for last mini-batch of epoch")
         logging.debug(f"  loss: {last_loss:.4f}")
@@ -698,11 +694,11 @@ def build_train_evaluate_model(
             [y_to_validate_0[0], y_to_validate_adv_squeeze[0]],
             [weights_to_validate_0[0], weights_val_adversary_split[0]],
         )
-        val_last_adv_bin_acc = original_val_hist[0]
-        val_last_adversary_loss = original_val_hist[1]
-        val_last_loss = original_val_hist[2]
-        val_last_main_cat_acc = original_val_hist[3]
-        val_last_main_output_loss = original_val_hist[4]
+        val_last_loss = original_val_hist[0]
+        val_last_main_output_loss = original_val_hist[1]
+        val_last_adversary_loss = original_val_hist[2]
+        val_last_adv_bin_acc = original_val_hist[3]
+        val_last_main_cat_acc = original_val_hist[4]
         logging.info(f"  loss on test dataset: {val_last_loss:.4f}")
         logging.info(f"  main_output_loss on test dataset: {val_last_main_output_loss:.4f}")
         logging.info(f"  adversary_loss on test dataset: {val_last_adversary_loss:.4f}")
@@ -714,6 +710,7 @@ def build_train_evaluate_model(
             small_y_val_adversary[0],
             small_weights_val_adversary,
         )
+        check_memory()
         val_last_disc_loss = adversary_val_hist[0]
         val_last_disc_bin_acc = adversary_val_hist[1]
         logging.debug(f"Val Adversary Loss: {val_last_disc_loss:.4f}")
@@ -742,8 +739,8 @@ def build_train_evaluate_model(
         original_model.save_weights(keras_dir / "original_model_checkpoint.weights.h5")
         discriminator_model.save_weights(keras_dir / "discriminator_checkpoint.weights.h5")
 
-        logging.info("Clear session")
-        K.clear_session()
+        logging.info("Start clear session")
+        K.clear_session(free_memory=True)
 
         epoch_h.ks_qcd_hist.append(ks_qcd)
         epoch_h.ks_sig_hist.append(ks_sig)
@@ -753,9 +750,9 @@ def build_train_evaluate_model(
         # Helpful to monitor training performance with large variations in loss
         # making the graph hard to parse
 
-        with (dir_name / "train_loss.txt").open("w") as train_file:
+        with (dir_name / "train_loss.txt").open("a") as train_file:
             train_file.write(str(last_main_output_loss) + "\n")
-        with (dir_name / "test_loss.txt").open("w") as test_file:
+        with (dir_name / "test_loss.txt").open("a") as test_file:
             test_file.write(str(val_last_main_output_loss) + "\n")
 
         # generating checkpoint plots of the model performance during training
@@ -830,6 +827,7 @@ def build_train_evaluate_model(
         high_mass,
         low_mass,
     )
+    check_memory()
     logging.info(f"ROC area under curve: {roc_auc:.3f}")
     logging.info("Max S over Root B: %.3f" % SoverB)
 

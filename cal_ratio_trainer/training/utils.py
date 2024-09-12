@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 from typing import Any, Optional, Tuple, TypeVar
 
@@ -8,6 +9,8 @@ from cal_ratio_trainer.common.column_names import EventType
 
 from cal_ratio_trainer.utils import find_training_result
 
+import psutil, humanize, os, GPUtil
+import tensorflow as tf
 
 def create_directories(
     model_to_do: str, base_dir: Path = Path("."), continue_from: Optional[int] = None
@@ -180,160 +183,160 @@ def low_or_high_pt_selection_train(
     """
     if lowPt and not highPt:
         signal_X = X.loc[
-            ((Y == 1) & (Z["llp_mH"] == 60))
-            | ((Y == 1) & (Z["llp_mH"] == 125))
-            | ((Y == 1) & (Z["llp_mH"] == 200))
+            ((Y.values == 1) & (Z["llp_mH"] == 60))
+            | ((Y.values == 1) & (Z["llp_mH"] == 125))
+            | ((Y.values == 1) & (Z["llp_mH"] == 200))
         ]
         signal_Y = Y.loc[
-            ((Y == 1) & (Z["llp_mH"] == 60))
-            | ((Y == 1) & (Z["llp_mH"] == 125))
-            | ((Y == 1) & (Z["llp_mH"] == 200))
+            ((Y.values == 1) & (Z["llp_mH"] == 60))
+            | ((Y.values == 1) & (Z["llp_mH"] == 125))
+            | ((Y.values == 1) & (Z["llp_mH"] == 200))
         ]
         signal_Z = Z.loc[
-            ((Y == 1) & (Z["llp_mH"] == 60))
-            | ((Y == 1) & (Z["llp_mH"] == 125))
-            | ((Y == 1) & (Z["llp_mH"] == 200))
+            ((Y.values == 1) & (Z["llp_mH"] == 60))
+            | ((Y.values == 1) & (Z["llp_mH"] == 125))
+            | ((Y.values == 1) & (Z["llp_mH"] == 200))
         ]
         signal_weights = weights.loc[
-            ((Y == 1) & (Z["llp_mH"] == 60))
-            | ((Y == 1) & (Z["llp_mH"] == 125))
-            | ((Y == 1) & (Z["llp_mH"] == 200))
+            ((Y.values == 1) & (Z["llp_mH"] == 60))
+            | ((Y.values == 1) & (Z["llp_mH"] == 125))
+            | ((Y.values == 1) & (Z["llp_mH"] == 200))
         ]
         signal_mc_weights = mc_weights.loc[
-            ((Y == 1) & (Z["llp_mH"] == 60))
-            | ((Y == 1) & (Z["llp_mH"] == 125))
-            | ((Y == 1) & (Z["llp_mH"] == 200))
+            ((Y.values == 1) & (Z["llp_mH"] == 60))
+            | ((Y.values == 1) & (Z["llp_mH"] == 125))
+            | ((Y.values == 1) & (Z["llp_mH"] == 200))
         ]
 
         qcd_X = X.loc[
-            ((Y == 0) & (Z["llp_mH"] == 60))
-            | ((Y == 0) & (Z["llp_mH"] == 125))
-            | ((Y == 0) & (Z["llp_mH"] == 200))
+            ((Y.values == 0) & (Z["llp_mH"] == 60))
+            | ((Y.values == 0) & (Z["llp_mH"] == 125))
+            | ((Y.values == 0) & (Z["llp_mH"] == 200))
         ]
         qcd_Y = Y.loc[
-            ((Y == 0) & (Z["llp_mH"] == 60))
-            | ((Y == 0) & (Z["llp_mH"] == 125))
-            | ((Y == 0) & (Z["llp_mH"] == 200))
+            ((Y.values == 0) & (Z["llp_mH"] == 60))
+            | ((Y.values == 0) & (Z["llp_mH"] == 125))
+            | ((Y.values == 0) & (Z["llp_mH"] == 200))
         ]
         qcd_Z = Z.loc[
-            ((Y == 0) & (Z["llp_mH"] == 60))
-            | ((Y == 0) & (Z["llp_mH"] == 125))
-            | ((Y == 0) & (Z["llp_mH"] == 200))
+            ((Y.values == 0) & (Z["llp_mH"] == 60))
+            | ((Y.values == 0) & (Z["llp_mH"] == 125))
+            | ((Y.values == 0) & (Z["llp_mH"] == 200))
         ]
         qcd_weights = weights.loc[
-            ((Y == 0) & (Z["llp_mH"] == 60))
-            | ((Y == 0) & (Z["llp_mH"] == 125))
-            | ((Y == 0) & (Z["llp_mH"] == 200))
+            ((Y.values == 0) & (Z["llp_mH"] == 60))
+            | ((Y.values == 0) & (Z["llp_mH"] == 125))
+            | ((Y.values == 0) & (Z["llp_mH"] == 200))
         ]
         qcd_mc_weights = mc_weights.loc[
-            ((Y == 0) & (Z["llp_mH"] == 60))
-            | ((Y == 0) & (Z["llp_mH"] == 125))
-            | ((Y == 0) & (Z["llp_mH"] == 200))
+            ((Y.values == 0) & (Z["llp_mH"] == 60))
+            | ((Y.values == 0) & (Z["llp_mH"] == 125))
+            | ((Y.values == 0) & (Z["llp_mH"] == 200))
         ]
 
         bib_X = X.loc[
-            ((Y == 2) & (Z["llp_mH"] == 60))
-            | ((Y == 2) & (Z["llp_mH"] == 125))
-            | ((Y == 2) & (Z["llp_mH"] == 200))
+            ((Y.values == 2) & (Z["llp_mH"] == 60))
+            | ((Y.values == 2) & (Z["llp_mH"] == 125))
+            | ((Y.values == 2) & (Z["llp_mH"] == 200))
         ]
         bib_Y = Y.loc[
-            ((Y == 2) & (Z["llp_mH"] == 60))
-            | ((Y == 2) & (Z["llp_mH"] == 125))
-            | ((Y == 2) & (Z["llp_mH"] == 200))
+            ((Y.values == 2) & (Z["llp_mH"] == 60))
+            | ((Y.values == 2) & (Z["llp_mH"] == 125))
+            | ((Y.values == 2) & (Z["llp_mH"] == 200))
         ]
         bib_Z = Z.loc[
-            ((Y == 2) & (Z["llp_mH"] == 60))
-            | ((Y == 2) & (Z["llp_mH"] == 125))
-            | ((Y == 2) & (Z["llp_mH"] == 200))
+            ((Y.values == 2) & (Z["llp_mH"] == 60))
+            | ((Y.values == 2) & (Z["llp_mH"] == 125))
+            | ((Y.values == 2) & (Z["llp_mH"] == 200))
         ]
         bib_weights = weights.loc[
-            ((Y == 2) & (Z["llp_mH"] == 60))
-            | ((Y == 2) & (Z["llp_mH"] == 125))
-            | ((Y == 2) & (Z["llp_mH"] == 200))
+            ((Y.values == 2) & (Z["llp_mH"] == 60))
+            | ((Y.values == 2) & (Z["llp_mH"] == 125))
+            | ((Y.values == 2) & (Z["llp_mH"] == 200))
         ]
         bib_mc_weights = mc_weights.loc[
-            ((Y == 2) & (Z["llp_mH"] == 60))
-            | ((Y == 2) & (Z["llp_mH"] == 125))
-            | ((Y == 2) & (Z["llp_mH"] == 200))
+            ((Y.values == 2) & (Z["llp_mH"] == 60))
+            | ((Y.values == 2) & (Z["llp_mH"] == 125))
+            | ((Y.values == 2) & (Z["llp_mH"] == 200))
         ]
 
     elif highPt and not lowPt:
         signal_X = X.loc[
-            ((Y == 1) & (Z["llp_mH"] == 400))
-            | ((Y == 1) & (Z["llp_mH"] == 600))
-            | ((Y == 1) & (Z["llp_mH"] == 1000))
+            ((Y.values == 1) & (Z["llp_mH"] == 400))
+            | ((Y.values == 1) & (Z["llp_mH"] == 600))
+            | ((Y.values == 1) & (Z["llp_mH"] == 1000))
         ]
         signal_Y = Y.loc[
-            ((Y == 1) & (Z["llp_mH"] == 400))
-            | ((Y == 1) & (Z["llp_mH"] == 600))
-            | ((Y == 1) & (Z["llp_mH"] == 1000))
+            ((Y.values == 1) & (Z["llp_mH"] == 400))
+            | ((Y.values == 1) & (Z["llp_mH"] == 600))
+            | ((Y.values == 1) & (Z["llp_mH"] == 1000))
         ]
         signal_Z = Z.loc[
-            ((Y == 1) & (Z["llp_mH"] == 400))
-            | ((Y == 1) & (Z["llp_mH"] == 600))
-            | ((Y == 1) & (Z["llp_mH"] == 1000))
+            ((Y.values == 1) & (Z["llp_mH"] == 400))
+            | ((Y.values == 1) & (Z["llp_mH"] == 600))
+            | ((Y.values == 1) & (Z["llp_mH"] == 1000))
         ]
         signal_weights = weights.loc[
-            ((Y == 1) & (Z["llp_mH"] == 400))
-            | ((Y == 1) & (Z["llp_mH"] == 600))
-            | ((Y == 1) & (Z["llp_mH"] == 1000))
+            ((Y.values == 1) & (Z["llp_mH"] == 400))
+            | ((Y.values == 1) & (Z["llp_mH"] == 600))
+            | ((Y.values == 1) & (Z["llp_mH"] == 1000))
         ]
         signal_mc_weights = mc_weights.loc[
-            ((Y == 1) & (Z["llp_mH"] == 400))
-            | ((Y == 1) & (Z["llp_mH"] == 600))
-            | ((Y == 1) & (Z["llp_mH"] == 1000))
+            ((Y.values == 1) & (Z["llp_mH"] == 400))
+            | ((Y.values == 1) & (Z["llp_mH"] == 600))
+            | ((Y.values == 1) & (Z["llp_mH"] == 1000))
         ]
 
         qcd_X = X.loc[
-            ((Y == 0) & (Z["llp_mH"] == 400))
-            | ((Y == 0) & (Z["llp_mH"] == 600))
-            | ((Y == 0) & (Z["llp_mH"] == 1000))
+            ((Y.values == 0) & (Z["llp_mH"] == 400))
+            | ((Y.values == 0) & (Z["llp_mH"] == 600))
+            | ((Y.values == 0) & (Z["llp_mH"] == 1000))
         ]
         qcd_Y = Y.loc[
-            ((Y == 0) & (Z["llp_mH"] == 400))
-            | ((Y == 0) & (Z["llp_mH"] == 600))
-            | ((Y == 0) & (Z["llp_mH"] == 1000))
+            ((Y.values == 0) & (Z["llp_mH"] == 400))
+            | ((Y.values == 0) & (Z["llp_mH"] == 600))
+            | ((Y.values == 0) & (Z["llp_mH"] == 1000))
         ]
         qcd_Z = Z.loc[
-            ((Y == 0) & (Z["llp_mH"] == 400))
-            | ((Y == 0) & (Z["llp_mH"] == 600))
-            | ((Y == 0) & (Z["llp_mH"] == 1000))
+            ((Y.values == 0) & (Z["llp_mH"] == 400))
+            | ((Y.values == 0) & (Z["llp_mH"] == 600))
+            | ((Y.values == 0) & (Z["llp_mH"] == 1000))
         ]
         qcd_weights = weights.loc[
-            ((Y == 0) & (Z["llp_mH"] == 400))
-            | ((Y == 0) & (Z["llp_mH"] == 600))
-            | ((Y == 0) & (Z["llp_mH"] == 1000))
+            ((Y.values == 0) & (Z["llp_mH"] == 400))
+            | ((Y.values == 0) & (Z["llp_mH"] == 600))
+            | ((Y.values == 0) & (Z["llp_mH"] == 1000))
         ]
         qcd_mc_weights = mc_weights.loc[
-            ((Y == 0) & (Z["llp_mH"] == 400))
-            | ((Y == 0) & (Z["llp_mH"] == 600))
-            | ((Y == 0) & (Z["llp_mH"] == 1000))
+            ((Y.values == 0) & (Z["llp_mH"] == 400))
+            | ((Y.values == 0) & (Z["llp_mH"] == 600))
+            | ((Y.values == 0) & (Z["llp_mH"] == 1000))
         ]
 
         bib_X = X.loc[
-            ((Y == 2) & (Z["llp_mH"] == 400))
-            | ((Y == 2) & (Z["llp_mH"] == 600))
-            | ((Y == 2) & (Z["llp_mH"] == 1000))
+            ((Y.values == 2) & (Z["llp_mH"] == 400))
+            | ((Y.values == 2) & (Z["llp_mH"] == 600))
+            | ((Y.values == 2) & (Z["llp_mH"] == 1000))
         ]
         bib_Y = Y.loc[
-            ((Y == 2) & (Z["llp_mH"] == 400))
-            | ((Y == 2) & (Z["llp_mH"] == 600))
-            | ((Y == 2) & (Z["llp_mH"] == 1000))
+            ((Y.values == 2) & (Z["llp_mH"] == 400))
+            | ((Y.values == 2) & (Z["llp_mH"] == 600))
+            | ((Y.values == 2) & (Z["llp_mH"] == 1000))
         ]
         bib_Z = Z.loc[
-            ((Y == 2) & (Z["llp_mH"] == 400))
-            | ((Y == 2) & (Z["llp_mH"] == 600))
-            | ((Y == 2) & (Z["llp_mH"] == 1000))
+            ((Y.values == 2) & (Z["llp_mH"] == 400))
+            | ((Y.values == 2) & (Z["llp_mH"] == 600))
+            | ((Y.values == 2) & (Z["llp_mH"] == 1000))
         ]
         bib_weights = weights.loc[
-            ((Y == 2) & (Z["llp_mH"] == 400))
-            | ((Y == 2) & (Z["llp_mH"] == 600))
-            | ((Y == 2) & (Z["llp_mH"] == 1000))
+            ((Y.values == 2) & (Z["llp_mH"] == 400))
+            | ((Y.values == 2) & (Z["llp_mH"] == 600))
+            | ((Y.values == 2) & (Z["llp_mH"] == 1000))
         ]
         bib_mc_weights = mc_weights.loc[
-            ((Y == 2) & (Z["llp_mH"] == 400))
-            | ((Y == 2) & (Z["llp_mH"] == 600))
-            | ((Y == 2) & (Z["llp_mH"] == 1000))
+            ((Y.values == 2) & (Z["llp_mH"] == 400))
+            | ((Y.values == 2) & (Z["llp_mH"] == 600))
+            | ((Y.values == 2) & (Z["llp_mH"] == 1000))
         ]
     else:
         # Here we just train everything we have
@@ -369,3 +372,30 @@ def low_or_high_pt_selection_train(
     )  # type: ignore
 
     return X, Y, Z, weights, mc_weights
+
+def check_memory():
+    memory_used = psutil.virtual_memory().used / (1024 ** 3) # in GB
+    memory_total = psutil.virtual_memory().total / (1024 ** 3) # in GB
+    memory_free = psutil.virtual_memory().free / (1024 ** 3) # in GB
+    memory_util = psutil.virtual_memory().percent
+    if memory_util > 70:
+        logging.warning("Taking up too much RAM! RAM: {0:.0f}/{1:.0f} GB | Util {2:3.0f}% ".format(memory_used, memory_total, memory_util))
+        raise MemoryError
+    else:
+        logging.debug("Gen RAM Free: {0:.0f} GB | Used: {1:.0f} GB | Util {2:3.0f}% | Total {3:.0f} GB".format(memory_free, memory_used, memory_util, memory_total))
+
+
+    physical_devices = tf.config.experimental.list_physical_devices('GPU')
+    if len(physical_devices) > 0:
+        gpu_stats = GPUtil.getGPUs()[0]
+        gpu_memory_used = gpu_stats.memoryUsed  # Memory used (in MB)
+        gpu_memory_total = gpu_stats.memoryTotal  # Total memory (in MB)
+        gpu_memory_free = gpu_memory_total - gpu_memory_used
+        gpu_memory_util = gpu_memory_used / gpu_memory_total
+
+        if gpu_memory_util > 0.8:
+            logging.warning("Taking up too much GPU RAM! GPU RAM: {0:.0f}/{1:.0f} MB | Util {2:3.0f}%".format(gpu_memory_used, gpu_memory_total, gpu_memory_util*100))
+            raise MemoryError
+        else:
+            logging.debug("GPU RAM Free: {0:.0f} MB | Used: {1:.0f} MB | Util {2:3.0f}% | Total {3:.0f} MB".format(gpu_memory_free, gpu_memory_used, gpu_memory_util*100, gpu_memory_total))
+    
