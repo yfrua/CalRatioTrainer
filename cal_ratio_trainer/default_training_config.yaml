@@ -12,8 +12,8 @@ filters_cnn_track: [64, 32, 32, 16]
 nodes_track_lstm: 10
 filters_cnn_MSeg: [32, 16, 8]
 nodes_MSeg_lstm: 5
-epochs: 2
-num_splits: 20
+epochs: 3
+num_splits: 10
 lr_values: 0.0008
 hidden_layer_fraction: 1.0
 

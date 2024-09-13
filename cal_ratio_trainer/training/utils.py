@@ -374,15 +374,15 @@ def low_or_high_pt_selection_train(
     return X, Y, Z, weights, mc_weights
 
 def check_memory():
-    memory_used = psutil.virtual_memory().used / (1024 ** 3) # in GB
-    memory_total = psutil.virtual_memory().total / (1024 ** 3) # in GB
-    memory_free = psutil.virtual_memory().free / (1024 ** 3) # in GB
+    memory_used = psutil.virtual_memory().used / (1024 ** 2) # in MB
+    memory_total = psutil.virtual_memory().total / (1024 ** 2) # in MB
+    memory_free = psutil.virtual_memory().free / (1024 ** 2) # in MB
     memory_util = psutil.virtual_memory().percent
     if memory_util > 70:
-        logging.warning("Taking up too much RAM! RAM: {0:.0f}/{1:.0f} GB | Util {2:3.0f}% ".format(memory_used, memory_total, memory_util))
+        logging.warning("Taking up too much RAM! RAM: {0:.1f}/{1:.1f} MB | Util {2:3.0f}% ".format(memory_used, memory_total, memory_util))
         raise MemoryError
     else:
-        logging.debug("Gen RAM Free: {0:.0f} GB | Used: {1:.0f} GB | Util {2:3.0f}% | Total {3:.0f} GB".format(memory_free, memory_used, memory_util, memory_total))
+        logging.debug("Gen RAM Free: {0:.0f} MB | Used: {1:.0f} MB | Util {2:3.0f}% | Total {3:.0f} MB".format(memory_free, memory_used, memory_util, memory_total))
 
 
     physical_devices = tf.config.experimental.list_physical_devices('GPU')

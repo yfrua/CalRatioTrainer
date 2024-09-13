@@ -13,6 +13,7 @@ from keras import backend as K
 from sklearn.model_selection import train_test_split
 import yaml
 from cal_ratio_trainer.common.fileio import load_dataset
+from memory_profiler import profile
 
 from cal_ratio_trainer.config import TrainingConfig
 from cal_ratio_trainer.training.evaluate_training import (
@@ -39,6 +40,7 @@ from cal_ratio_trainer.training.utils import (
 from cal_ratio_trainer.utils import HistoryTracker
 
 
+@profile
 def train_llp(
     training_params: TrainingConfig,
     cache: Path,
@@ -133,8 +135,7 @@ def train_llp(
     ) = prepare_training_datasets(df, df_adversary)
 
     # Save memory
-    del df
-    del df_adversary
+    del df, df_adversary
     gc.collect()
 
     # Split data into train/test datasets
@@ -182,14 +183,7 @@ def train_llp(
         shuffle=False,
     )
     # Delete variables to save memory
-    del X
-    del X_adversary
-    gc.collect()
-    del Y
-    del Y_adversary
-    gc.collect()
-    del Z
-    del Z_adversary
+    del X, X_adversary, Y, Y_adversary, Z, Z_adversary
     gc.collect()
 
     eval_object = evaluationObject()
@@ -246,6 +240,7 @@ def _enable_layers(model, name_contains: str, does_contain: bool):
             layer_adv.trainable = name_contains not in layer_adv.name
 
 
+@profile
 def build_train_evaluate_model(
     constit_input: ModelInput,
     track_input: ModelInput,
@@ -651,6 +646,8 @@ def build_train_evaluate_model(
                 last_disc_bin_acc = adversary_hist[1]
                 logging.debug(f"  Adversary Loss: {last_disc_loss:.4f}")
                 logging.debug(f"  Adversary binary Accuracy: {last_disc_bin_acc:.4f}")
+                del adversary_hist
+                gc.collect()
 
             logging.debug("  -> Training main network")
 
@@ -677,6 +674,8 @@ def build_train_evaluate_model(
             last_adversary_loss = original_hist[2]
             last_adv_bin_acc = original_hist[3]
             last_main_cat_acc = original_hist[4]
+            del original_hist
+            gc.collect()
 
         logging.debug("  Info for last mini-batch of epoch")
         logging.debug(f"  loss: {last_loss:.4f}")
@@ -704,6 +703,8 @@ def build_train_evaluate_model(
         logging.info(f"  adversary_loss on test dataset: {val_last_adversary_loss:.4f}")
         logging.info(f"  Main categorical accuracy on test dataset: {val_last_main_cat_acc}")
         logging.info(f"  Adversary binary accuracy on test dataset: {val_last_adv_bin_acc}")
+        del original_val_hist
+        gc.collect()
 
         adversary_val_hist = discriminator_model.test_on_batch(
             small_x_val_adversary,
@@ -740,7 +741,7 @@ def build_train_evaluate_model(
         discriminator_model.save_weights(keras_dir / "discriminator_checkpoint.weights.h5")
 
         logging.info("Start clear session")
-        K.clear_session(free_memory=True)
+        K.clear_session()
 
         epoch_h.ks_qcd_hist.append(ks_qcd)
         epoch_h.ks_sig_hist.append(ks_sig)
