@@ -13,7 +13,6 @@ from keras import backend as K
 from sklearn.model_selection import train_test_split
 import yaml
 from cal_ratio_trainer.common.fileio import load_dataset
-from memory_profiler import profile
 
 from cal_ratio_trainer.config import TrainingConfig
 from cal_ratio_trainer.training.evaluate_training import (
@@ -35,12 +34,10 @@ from cal_ratio_trainer.training.utils import (
     create_directories,
     low_or_high_pt_selection_train,
     match_adversary_weights,
-    check_memory,
 )
 from cal_ratio_trainer.utils import HistoryTracker
 
 
-@profile
 def train_llp(
     training_params: TrainingConfig,
     cache: Path,
@@ -240,7 +237,6 @@ def _enable_layers(model, name_contains: str, does_contain: bool):
             layer_adv.trainable = name_contains not in layer_adv.name
 
 
-@profile
 def build_train_evaluate_model(
     constit_input: ModelInput,
     track_input: ModelInput,
@@ -480,7 +476,7 @@ def build_train_evaluate_model(
     logging.debug(f"Writing out test data to {dir_name.parent/'x_to_test.npz'}")
     np.savez_compressed(dir_name.parent / "x_to_test.npz", *x_to_test)
     np.savez_compressed(dir_name.parent / "weights_to_test.npz", *weights_to_test)
-    check_memory()
+    
 
     # Now to setup ML architecture
     logging.debug("Setting up model architecture...")
@@ -500,7 +496,7 @@ def build_train_evaluate_model(
         X_train_jet,
         training_params,
     )
-    check_memory()
+    
 
     # Save model architecture
     original_model.save(dir_name / "keras" / "model.keras")
@@ -569,7 +565,7 @@ def build_train_evaluate_model(
         beta_2=0.999,
         epsilon=1e-07,
     )
-    check_memory()
+    
 
     # Compile the models
     logging.debug("Compiling the models.")
@@ -588,7 +584,7 @@ def build_train_evaluate_model(
         metrics=[metrics.categorical_accuracy, metrics.binary_accuracy],
         loss_weights=[1, -training_params.adversary_weight],
     )
-    check_memory()
+    
 
     # If this from a previous run, load the weights and our tracking history
     keras_dir = dir_name / "keras"
@@ -640,7 +636,7 @@ def build_train_evaluate_model(
                     small_y_to_train_adversary_0[i_batch],
                     sample_weight=small_weights_train_adversary[i_batch],
                 )
-                check_memory()
+                
 
                 last_disc_loss = adversary_hist[0]
                 last_disc_bin_acc = adversary_hist[1]
@@ -648,6 +644,7 @@ def build_train_evaluate_model(
                 logging.debug(f"  Adversary binary Accuracy: {last_disc_bin_acc:.4f}")
                 del adversary_hist
                 gc.collect()
+                
 
             logging.debug("  -> Training main network")
 
@@ -664,7 +661,7 @@ def build_train_evaluate_model(
             original_hist = original_model.train_on_batch(
                 train_inputs, train_outputs, train_weights
             )
-            check_memory()
+            
 
             # TODO: this is printed out at the end - we should do an average and a
             # sigma or something
@@ -676,6 +673,7 @@ def build_train_evaluate_model(
             last_main_cat_acc = original_hist[4]
             del original_hist
             gc.collect()
+            
 
         logging.debug("  Info for last mini-batch of epoch")
         logging.debug(f"  loss: {last_loss:.4f}")
@@ -711,7 +709,7 @@ def build_train_evaluate_model(
             small_y_val_adversary[0],
             small_weights_val_adversary,
         )
-        check_memory()
+        
         val_last_disc_loss = adversary_val_hist[0]
         val_last_disc_bin_acc = adversary_val_hist[1]
         logging.debug(f"Val Adversary Loss: {val_last_disc_loss:.4f}")
@@ -828,7 +826,7 @@ def build_train_evaluate_model(
         high_mass,
         low_mass,
     )
-    check_memory()
+    
     logging.info(f"ROC area under curve: {roc_auc:.3f}")
     logging.info("Max S over Root B: %.3f" % SoverB)
 

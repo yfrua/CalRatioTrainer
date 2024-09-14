@@ -372,30 +372,3 @@ def low_or_high_pt_selection_train(
     )  # type: ignore
 
     return X, Y, Z, weights, mc_weights
-
-def check_memory():
-    memory_used = psutil.virtual_memory().used / (1024 ** 2) # in MB
-    memory_total = psutil.virtual_memory().total / (1024 ** 2) # in MB
-    memory_free = psutil.virtual_memory().free / (1024 ** 2) # in MB
-    memory_util = psutil.virtual_memory().percent
-    if memory_util > 70:
-        logging.warning("Taking up too much RAM! RAM: {0:.1f}/{1:.1f} MB | Util {2:3.0f}% ".format(memory_used, memory_total, memory_util))
-        raise MemoryError
-    else:
-        logging.debug("Gen RAM Free: {0:.0f} MB | Used: {1:.0f} MB | Util {2:3.0f}% | Total {3:.0f} MB".format(memory_free, memory_used, memory_util, memory_total))
-
-
-    physical_devices = tf.config.experimental.list_physical_devices('GPU')
-    if len(physical_devices) > 0:
-        gpu_stats = GPUtil.getGPUs()[0]
-        gpu_memory_used = gpu_stats.memoryUsed  # Memory used (in MB)
-        gpu_memory_total = gpu_stats.memoryTotal  # Total memory (in MB)
-        gpu_memory_free = gpu_memory_total - gpu_memory_used
-        gpu_memory_util = gpu_memory_used / gpu_memory_total
-
-        if gpu_memory_util > 0.8:
-            logging.warning("Taking up too much GPU RAM! GPU RAM: {0:.0f}/{1:.0f} MB | Util {2:3.0f}%".format(gpu_memory_used, gpu_memory_total, gpu_memory_util*100))
-            raise MemoryError
-        else:
-            logging.debug("GPU RAM Free: {0:.0f} MB | Used: {1:.0f} MB | Util {2:3.0f}% | Total {3:.0f} MB".format(gpu_memory_free, gpu_memory_used, gpu_memory_util*100, gpu_memory_total))
-    
