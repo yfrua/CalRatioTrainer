@@ -363,6 +363,29 @@ class BuildMainTrainingConfig(BaseModel):
         default=None,
     )
 
+class ControlRegionCheckConfig(BaseModel):
+    lr_values: Optional[float] 
+    filters_cnn_constit: Optional[List[int]]
+    frac_list: Optional[float]
+    nodes_constit_lstm: Optional[int]
+    reg_values: Optional[float]
+    dropout_array: Optional[float]
+    adversary_weight: Optional[float]
+    layers_list: Optional[int]
+    filters_cnn_track: Optional[List[int]]
+    nodes_track_lstm: Optional[int]
+    filters_cnn_MSeg: Optional[List[int]]
+    nodes_MSeg_lstm: Optional[int]
+    hidden_layer_fraction: Optional[float]
+    mH_parametrization: Optional[bool] = False
+    mS_parametrization: Optional[bool] = False
+    include_low_mass: Optional[bool] = True
+    include_high_mass: Optional[bool] = True
+    main_training_file: Optional[str] = None
+    cr_training_file: Optional[str] = None
+    name: Optional[str]
+    json_file : Optional[Path]
+    model_weight : Optional[Path]
 
 config_default_file = {
     TrainingConfig: "default_training_config",
@@ -372,4 +395,5 @@ config_default_file = {
     ConvertDiVertAnalysisConfig: "default_divert_config",
     BuildMainTrainingConfig: "default_build_main_training_config",
     ConvertxAODConfig: "default_xaod_config",
+    ControlRegionCheckConfig: "default_check_config",
 }

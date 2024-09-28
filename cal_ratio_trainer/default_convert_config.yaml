@@ -1,5 +1,5 @@
 run_to_convert:
   name: default
-  run: 0
-  epoch: 1
+  run: 1
+  epoch: 80
 output_json: model.json

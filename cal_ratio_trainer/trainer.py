@@ -13,6 +13,7 @@ from cal_ratio_trainer.config import (
     DiVertFileType,
     ReportingConfig,
     TrainingConfig,
+    ControlRegionCheckConfig,
     epoch_spec,
     load_config,
     plot_file,
@@ -210,6 +211,18 @@ def do_resample(args):
 
     resample_training_file(
         args.input_file, args.output_file, args.fraction, cache)
+
+
+def do_cr_check(args):
+    # Get the config loaded.
+    c_config = load_config(ControlRegionCheckConfig, args.config)
+
+    # Next, look at the arguments and see if anything should be changed.
+    c = apply_config_args(ControlRegionCheckConfig, c_config, args)
+
+    from cal_ratio_trainer.training.CR_check import ControlRegion_check
+    ControlRegion_check(c, cache)
+
 
 
 def main():
@@ -468,6 +481,17 @@ def main():
         type=float,
     )
     parser_resample.set_defaults(func=do_resample)
+
+    # add a parser to do control region check with ks result
+    parser_compare = subparsers.add_parser("cr_check", help="control region check with ks result")
+    parser_compare.add_argument(
+        "--config",
+        "-c",
+        type=Path,
+        help="Path to the config file to use for analysis",
+    )
+    add_config_args(ControlRegionCheckConfig, parser_compare)
+    parser_compare.set_defaults(func=do_cr_check)
 
     # Parse the command line arguments
     args = parser.parse_args()
