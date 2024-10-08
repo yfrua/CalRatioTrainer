@@ -383,9 +383,15 @@ class ControlRegionCheckConfig(BaseModel):
     include_high_mass: Optional[bool] = True
     main_training_file: Optional[str] = None
     cr_training_file: Optional[str] = None
-    name: Optional[str]
-    json_file : Optional[Path]
-    model_weight : Optional[Path]
+    name: Optional[str] = Field(
+        description="Name of the model - for user reference only"
+    )
+    json_file : Optional[Path] = Field(
+        description="Path to the json file of the model architecture"
+    )
+    model_weight : Optional[Path] =Field(
+        description="Path to the weight.h5 file of the model weight"
+    )
 
 config_default_file = {
     TrainingConfig: "default_training_config",

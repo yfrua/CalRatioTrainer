@@ -15,13 +15,13 @@ hidden_layer_fraction: 1.0
 main_training_file: "https://cernbox.cern.ch/remote.php/dav/public-files/32dqr9gSbmQdj3W/processed_output_Lxy1500_Lz3000_3_slim05.pkl"
 cr_training_file: https://cernbox.cern.ch/remote.php/dav/public-files/r0GQeSVMuu0mDKX/processed_output_controlRegion_corrected.pkl
 
-name: official
-json_file: /data/fye/CalRatioNN/llp_nn/python/keras_output/high_mass/final_keras_cpu_model_hm_0_apr28.json
-model_weight: /data/fye/CalRatioNN/llp_nn/python/keras_output/high_mass/cpu_model_weights_hm_0_resume.h5
+# name: official
+# json_file: /data/fye/CalRatioNN/llp_nn/python/keras_output/high_mass/final_keras_cpu_model_hm_0_apr28.json
+# model_weight: /data/fye/CalRatioNN/llp_nn/python/keras_output/high_mass/cpu_model_weights_hm_0_resume.h5
 
-# name: default01
-# json_file: /data/fye/CalRatioNN/CalRatioTrainer/training_results/default/00001/keras/model.json
-# model_weight: /data/fye/CalRatioNN/CalRatioTrainer/training_results/default/00001/keras/final_model_weights_80.weights.h5
+name: default01
+json_file: /data/fye/CalRatioNN/CalRatioTrainer/training_results/default/00001/keras/model.json
+model_weight: /data/fye/CalRatioNN/CalRatioTrainer/training_results/default/00001/keras/final_model_weights_80.weights.h5
 
 # name: default02
 # json_file: /data/fye/CalRatioNN/CalRatioTrainer/training_results/default/00002/keras/model.json
