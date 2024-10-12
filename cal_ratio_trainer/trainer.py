@@ -1,5 +1,6 @@
 import argparse
 import logging
+import os
 from pathlib import Path
 from typing import List
 
@@ -13,7 +14,7 @@ from cal_ratio_trainer.config import (
     DiVertFileType,
     ReportingConfig,
     TrainingConfig,
-    ControlRegionCheckConfig,
+    ModelCompareConfig,
     epoch_spec,
     load_config,
     plot_file,
@@ -213,15 +214,18 @@ def do_resample(args):
         args.input_file, args.output_file, args.fraction, cache)
 
 
-def do_cr_check(args):
+def do_model_compare(args):
     # Get the config loaded.
-    c_config = load_config(ControlRegionCheckConfig, args.config)
+    c_config = load_config(ModelCompareConfig, args.config)
 
     # Next, look at the arguments and see if anything should be changed.
-    c = apply_config_args(ControlRegionCheckConfig, c_config, args)
+    c = apply_config_args(ModelCompareConfig, c_config, args)
 
-    from cal_ratio_trainer.training.CR_check import ControlRegion_check
-    ControlRegion_check(c, cache)
+    if not os.path.exists('plots'):
+        os.mkdir('plots')
+    from cal_ratio_trainer.training.model_compare import control_region_check, prediction_check
+    prediction_check(c, cache)
+    # control_region_check(c, cache)
 
 
 
@@ -482,16 +486,20 @@ def main():
     )
     parser_resample.set_defaults(func=do_resample)
 
-    # add a parser to do control region check with ks result
-    parser_compare = subparsers.add_parser("cr_check", help="control region check with ks result")
+    # add a parser to do model compare with ks result
+    parser_compare = subparsers.add_parser(
+        "model_compare", 
+        help="compare two model with three prediction score distribution on test data and" 
+        "bib score distribution on control region data and QCD MC",
+    ) 
     parser_compare.add_argument(
         "--config",
         "-c",
         type=Path,
         help="Path to the config file to use for analysis",
     )
-    add_config_args(ControlRegionCheckConfig, parser_compare)
-    parser_compare.set_defaults(func=do_cr_check)
+    add_config_args(ModelCompareConfig, parser_compare)
+    parser_compare.set_defaults(func=do_model_compare)
 
     # Parse the command line arguments
     args = parser.parse_args()

@@ -18,13 +18,33 @@ This isn't meant to be an exploratory thing as much as "easy-to-run". Use `--hel
 * `cr_trainer convert training <name>/<run>/<epoch>` will convert that run's model with weights from that epoch to a `json` file that DiVertAnalysis's `fdeep` package can import and run.
 * `cr_trainer convert divertanalysis file_path -data_type qcd` will convert the `DiVertAnalysisR21` output at `file_path` to a pre-training file. This can then be used to build a full training sample. Wildcards are allowed. Use `yaml` config to build a complete set. Note that the conversion is designed to skip errors (and files previously converted). It is important to look at the log messages that result from this run to make sure all the files you want processed have been processed. It is possible to run multiple copies of this command at once - they shouldn't step on each other.
 * `cr_trainer convert xaod <file-path> <output-path>` will check out the head of DiVertAnalysis, build it, and run it, and copy the resulting root file to `<output-path>`. Use the `-vv` option in order to see log messages that come from running the executable. This only works on Windows currently as it is using `wsl2`, and expects an `atlas_centos7` instance installed (`cvmfs` based-instance). It shouldn't be too hard to make it possible to run natively as well. Use the `--add_training` to add new trainings to the run for comparison.
-* `cr_trainer cr_check` will use all the control region data, plot the distribution of bib score and its ks-score on data and QCD category. Converting your trained network into json file first.
+* `cr_trainer model_compare` will make plots that compare two model. One of which is the distribution of bib score and its ks-score on data and QCD category using all the control region data. Another is the prediction distribution and ROC curve using test dataset. 
 
 Some quick notes:
 
 * The first time you run this, it will copy down data files and cache them locally. You can change the cache location or file location using the configuration file.
 * The output directory contains a complete set of the options that were used in the run, so it is easy to see exactly how a run was configured.
 * test samples can run on a 16GB V100 if you do mini-match splitting of 15.
+* `model_compare` utility imports `puma-hep` package. You should locate the `flavours.yaml` file (in my case is in `/home/*username/anaconda3/envs/*environment_name/lib/python3.10/site-packages/ftag/flavours.yaml`), add
+```yaml
+# CalRatio
+- name: signal
+  label: Signal
+  cuts: ["labels == 1"]
+  colour: tab:blue
+  category: CalRatio
+- name: qcd
+  label: SM Multijet
+  cuts: ["labels == 0"]
+  colour: tab:blue
+  category: CalRatio
+- name: bib
+  label: BIB
+  cuts: ["labels == 2"]
+  colour: tab:blue
+  category: CalRatio
+```
+to it and delete existing `qcd` stuff under `Xbb tagging` category.
 
 ### Running Parameters
 

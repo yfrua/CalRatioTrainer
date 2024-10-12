@@ -363,7 +363,7 @@ class BuildMainTrainingConfig(BaseModel):
         default=None,
     )
 
-class ControlRegionCheckConfig(BaseModel):
+class ModelCompareConfig(BaseModel):
     lr_values: Optional[float] 
     filters_cnn_constit: Optional[List[int]]
     frac_list: Optional[float]
@@ -383,15 +383,12 @@ class ControlRegionCheckConfig(BaseModel):
     include_high_mass: Optional[bool] = True
     main_training_file: Optional[str] = None
     cr_training_file: Optional[str] = None
-    name: Optional[str] = Field(
-        description="Name of the model - for user reference only"
-    )
-    json_file : Optional[Path] = Field(
-        description="Path to the json file of the model architecture"
-    )
-    model_weight : Optional[Path] =Field(
-        description="Path to the weight.h5 file of the model weight"
-    )
+    name1: Optional[str] = Field(description="Name of the model1 - for user reference only")
+    json_file1: Optional[Path] = Field(description="Path to the json file of the model1 architecture")
+    model_weight1: Optional[Path] =Field(description="Path to the weight.h5 file of the model1 weight")
+    name2: Optional[str] = Field(description="Name of the model2 - for user reference only")
+    json_file2: Optional[Path] = Field(description="Path to the json file of the model2 architecture")
+    model_weight2: Optional[Path] =Field(description="Path to the weight.h5 file of the model2 weight")
 
 config_default_file = {
     TrainingConfig: "default_training_config",
@@ -401,5 +398,5 @@ config_default_file = {
     ConvertDiVertAnalysisConfig: "default_divert_config",
     BuildMainTrainingConfig: "default_build_main_training_config",
     ConvertxAODConfig: "default_xaod_config",
-    ControlRegionCheckConfig: "default_check_config",
+    ModelCompareConfig: "default_compare_config",
 }

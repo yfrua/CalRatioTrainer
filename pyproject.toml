@@ -11,6 +11,7 @@ dependencies = [
     "fsspec[ssh,http]",
     "atlas-mpl-style",
     "pyarrow",
+    "puma-hep",
 ] # Dependencies are for installing on a pre-made TF container
 
 [project.optional-dependencies]

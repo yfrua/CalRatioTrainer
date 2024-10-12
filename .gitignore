@@ -95,3 +95,7 @@ prof/
 nohup.out
 path.sh
 test.py
+
+# include training results
+/!training_results/default/00001/keras/model.json
+/!training_results/default/00001/keras/final_model_weights_80.weights.h5
