@@ -225,7 +225,7 @@ def do_model_compare(args):
         os.mkdir('plots')
     from cal_ratio_trainer.training.model_compare import control_region_check, prediction_check
     prediction_check(c, cache)
-    # control_region_check(c, cache)
+    control_region_check(c, cache)
 
 
 

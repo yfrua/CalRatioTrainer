@@ -19,9 +19,13 @@ name1: official
 json_file1: /data/fye/CalRatioNN/llp_nn/python/keras_output/high_mass/final_keras_cpu_model_hm_0_apr28.json
 model_weight1: /data/fye/CalRatioNN/llp_nn/python/keras_output/high_mass/cpu_model_weights_hm_0_resume.h5
 
-name2: current
-json_file2: /data/fye/CalRatioNN/CalRatioTrainer/training_results/default/00001/keras/model.json
-model_weight2: /data/fye/CalRatioNN/CalRatioTrainer/training_results/default/00001/keras/final_model_weights_80.weights.h5
+# name2: current
+# json_file2: /data/fye/CalRatioNN/CalRatioTrainer/training_results/default/00001/keras/model.json
+# model_weight2: /data/fye/CalRatioNN/CalRatioTrainer/training_results/default/00001/keras/final_model_weights_80.weights.h5
+
+name2: current_han
+json_file2: /data/fye/CalRatioNN/llp_nn/python/keras_output/high_mass/final_keras_cpu_model_hm_0_apr28.json
+model_weight2: /data/fye/CalRatioNN/CalRatioTrainer/training_results/han_li/final_model_weights_7.h5
 
 # name: default02
 # json_file: /data/fye/CalRatioNN/CalRatioTrainer/training_results/default/00002/keras/model.json
